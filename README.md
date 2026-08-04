@@ -1,0 +1,122 @@
+# Document-Driven Development for AI Agents
+
+A framework for generating empirically-optimized documentation that makes your codebase navigable by AI coding agents (Claude, Copilot, Cursor, etc.).
+
+## What This Is
+
+
+### Please read this if nothing else
+
+This repo contains everything you need to generate a documentation system for your own codebase — one that's specifically designed to help AI agents understand and work in your code effectively. It's based on a research synthesis of ~38 academic sources and ~50 verified empirical claims about how LLMs consume documentation. I highly recommend at least viewing and understanding the rationale behind the [10 Design Principles](https://github.com/dog-f/spec-driven-llm-development/blob/main/research/evidence-and-guidelines.md#4-design-principles-plain-language-summary).
+
+The core insight: **curated, layered documentation dramatically improves AI agent output quality** — but only if you follow specific principles backed by evidence (positioning, length budgets, concrete examples over prose, freshness).
+
+This is empirically derived but not explicitly tested. ***Just like the Agile processes we love***, expect to ***tailor*** and ***tune*** these documents to fit the needs and constraints of your repos, agents, teams, wishes, desires, and dreams. If you ultimately notice this documentation system helping your workflow but you find yourself repeating the same context or leading question, point the agent at the root AGENTS.md and research doc and tell it to find the most appropriate spot to insert the concern.
+
+## How It Works
+
+Make sure the model your using is one you've had decent luck with understanding your codebase. I personally recommend using Opus at `high` or above at the current time of August 3, 2026.
+
+1. **You** copy this repo (or its contents) somewhere accessible
+2. **You** point your AI agent at the prompt file and say "generate docs for my codebase"
+3. **The agent** reads your source code and produces documentation following the research-backed rules
+4. **You** review, refine, and maintain the docs as living artifacts
+
+## Quick Start
+
+```bash
+# Clone this repo
+git clone https://github.com/dog-f/spec-driven-llm-development.git
+
+# Copy the prompt into your target project (or reference it directly)
+cp spec-driven-llm-development/prompt.md /path/to/your/project/
+
+# Point Claude at it:
+# "Read prompt.md and generate documentation for this codebase following the system described there."
+
+# remove the prompt after generation
+rm /path/to/your/project/prompt.md
+```
+
+Or, if using Claude Code directly in your target repo:
+
+```
+Read ~/path/to/spec-driven-llm-development/prompt.md and generate documentation
+for this codebase following the system described there.
+```
+
+## Contents
+
+```
+spec-driven-llm-development/
+├── README.md                          # You are here
+├── prompt.md                          # The instruction file you give to your AI agent
+├── research/
+│   └── evidence-and-guidelines.md     # Full research synthesis (read for understanding, not required)
+├── templates/
+│   ├── AGENTS.md                      # Root agent document template
+│   ├── service-agents.md              # Per-service/module agent document template
+│   ├── architecture-doc.md            # Architecture document template
+│   ├── guide.md                       # How-to guide template
+│   ├── spec.md                        # Feature specification template
+│   ├── decision.md                    # Architectural decision record template
+│   └── working-with-agents.md         # "Working with Agents" section for the root README
+├── skills/
+│   ├── update-docs/SKILL.md           # Claude Code skill: update docs after code changes
+│   └── audit-docs/SKILL.md            # Claude Code skill: periodic audit of docs vs codebase
+└── examples/
+    ├── root-agents-md.md              # Example root AGENTS.md (fictional e-commerce monorepo)
+    ├── service-agents-md.md           # Example per-service AGENTS.md
+    └── architecture-doc.md            # Example architecture document
+```
+
+## Skills (Claude Code)
+
+The `skills/` directory contains two Claude Code skills for ongoing documentation maintenance. To use them, copy the entire `skills/` directory into your target repo under `.claude/`:
+
+```bash
+# From your target repo root:
+cp -r /path/to/spec-driven-llm-development/skills .claude/
+```
+
+This gives you `update-docs` and `audit-docs`. Once placed, new Claude sessions should be able to use them to keep your docs up to date.
+
+- **`/update-docs`** — run after any code change to sync affected docs
+- **`/audit-docs`** — run periodically to catch drift from PRs that skipped `/update-docs`
+
+## The 10 Writing Rules (Summary)
+
+These are the empirically-backed rules that govern all generated documentation:
+
+1. **Layered retrieval** — scope context to the task. Don't flood everything at once.
+2. **Keep docs fresh** — "Last verified" dates on every doc. Stale docs are defects.
+3. **Critical info at edges** — start or end of document, never buried in the middle.
+4. **Curate hard** — less is more. Under 200 lines per doc (300 max for complex topics).
+5. **Concrete code examples** — over abstract prose. Real file paths, real code.
+6. **Reference actual code** — not generic "similar" patterns. Point to the real thing.
+7. **Exact interfaces** — specify real function names, class names, explicit requirements.
+8. **Don't over-invest in format** — no empirical support for template structure mattering.
+9. **Cite with links** — actual URLs, not "per the docs somewhere."
+10. **Describe the present** — not the past. Remove references to retired behavior.
+
+Each rule has empirical backing mapped in the [research synthesis](https://github.com/dog-f/spec-driven-llm-development/blob/main/research/evidence-and-guidelines.md#4-design-principles-plain-language-summary).
+
+## Who This Is For
+
+- Teams with codebases that AI agents struggle to navigate
+- Projects with no documentation or outdated docs
+- Anyone who wants to systematically improve AI agent performance on their code
+- Monorepos, microservices, or any multi-module project
+
+## Philosophy
+
+This is NOT a documentation framework for humans (though humans benefit too). It's specifically optimized for how LLMs consume and reason about context. The key differences from traditional documentation:
+
+- **Ruthless length limits** (LLM attention degrades with context size)
+- **Layered architecture** (just-in-time retrieval, not everything-at-once)
+- **Examples over explanations** (ablation studies show examples matter most)
+- **Freshness as a first-class concern** (stale docs cause confidently wrong code)
+
+## License
+
+MIT — use however you want.
