@@ -60,7 +60,8 @@ spec-driven-llm-development/
 │   ├── guide.md                       # How-to guide template
 │   ├── spec.md                        # Feature specification template
 │   ├── decision.md                    # Architectural decision record template
-│   └── working-with-agents.md         # "Working with Agents" section for the root README
+│   ├── working-with-agents.md         # "Working with Agents" section for the root README
+│   └── find-missing-context-skill.md          # Skill template: search external resources before guessing (filled in per repo)
 ├── skills/
 │   ├── update-docs/SKILL.md           # Claude Code skill: update docs after code changes
 │   └── audit-docs/SKILL.md            # Claude Code skill: periodic audit of docs vs codebase
@@ -83,6 +84,10 @@ This gives you `update-docs` and `audit-docs`. Once placed, new Claude sessions 
 
 - **`/update-docs`** — run after any code change to sync affected docs
 - **`/audit-docs`** — run periodically to catch drift from PRs that skipped `/update-docs`
+
+The generation prompt also creates a third, repo-specific skill from `templates/find-missing-context-skill.md`:
+
+- **`find-missing-context`** — reminds agents which external resources they can reach (chat, issue tracker, wiki, other repos, observability) and to search them before guessing or asking. It lives in `templates/` rather than `skills/` because it has to be filled in with each repo's real resources.
 
 ## The 10 Writing Rules (Summary)
 

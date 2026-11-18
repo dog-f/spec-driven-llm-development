@@ -40,6 +40,7 @@ This repo ships skills in `.claude/skills/` that agents can invoke:
 |---|---|---|
 | `update-docs` | `/update-docs` | Audit and update all docs affected by your code changes |
 | `audit-docs` | `/audit-docs` | Verify all docs against current codebase state to catch drift |
+| `find-missing-context` | `/find-missing-context` | Search Slack, tickets, wiki, and other repos before guessing at missing context |
 
 To use: after completing a feature, run `/update-docs`. The skill reads the root
 `AGENTS.md` documentation rules and walks through the full update workflow.

@@ -104,6 +104,7 @@ Before you write anything, you need to understand the system. Ask the user the f
 
 11. Where does the team communicate? (Slack channels, specific Jira projects, Confluence spaces, etc.) Would an agent benefit from being able to search these?
 12. Are there GitHub organizations, repos, or issue trackers that an agent should know about?
+12a. What else can agents reach from this machine: MCP servers, CLIs (`gh`, observability or cloud CLIs), dashboards, shared drives? Before asking, check for yourself: look at `.mcp.json`, `.claude/settings*.json`, and the tools and MCP servers available in your own session, then ask the user to confirm and fill gaps.
 13. Is there any existing documentation — READMEs, wikis, architecture diagrams, ADRs — that should be preserved or incorporated?
 
 ### How to use the answers:
@@ -113,7 +114,7 @@ Before you write anything, you need to understand the system. Ask the user the f
 - Hard constraints become the "Hard Rules" section.
 - Architecture answers inform the service map, dependency graph, and architecture docs.
 - Dev workflow answers become the "Local Development" and "Build & Test" sections.
-- External resources become the "Resources" section in the root `AGENTS.md`.
+- External resources become the "Resources" section in the root `AGENTS.md` and the `find-missing-context` skill (Step 7a).
 - Sibling repos get noted in the root `AGENTS.md` so agents know where to look beyond this directory.
 
 ---
@@ -126,6 +127,7 @@ Generate this file structure in the codebase:
 project-root/
 ├── AGENTS.md                          # Root agent document (orientation + routing)
 ├── CLAUDE.md                          # Points to AGENTS.md (for Claude Code compatibility)
+├── .claude/skills/find-missing-context/SKILL.md   # Tells agents to search external resources before guessing
 ├── docs/
 │   ├── architecture/
 │   │   ├── system-overview.md         # Service/module topology and communication
@@ -248,13 +250,26 @@ Create `docs/specs/TEMPLATE.md` and `docs/decisions/TEMPLATE.md` in the project 
 
 Adapt the content to fit the project's terminology (e.g., rename "Affected Components" if the project uses "services" or "modules"), but preserve the immutability rules and Open Questions format.
 
+### Step 7a: Create the `find-missing-context` skill
+
+Agents tend to guess rather than search, even when they can reach Slack, the issue tracker, the wiki, and other repos. Create `.claude/skills/find-missing-context/SKILL.md` from `templates/find-missing-context-skill.md` so they have a standing reminder of what's available and when to use it.
+
+- Fill the resource table from the Step 0 answers (questions 6, 7, 11–13) and what you found in Step 1. Include real names **with URLs** (rule 9): issue-tracker project links, wiki space links, the code-host org link, a few example chat channels, and local paths to sibling repos. Look these up with the team's MCP tools rather than guessing them. However, ensure nothing sensitive is stored.
+- Keep each row's "reach for it when" **broad**. Describe the kinds of questions a resource answers, not a closed list. The goal is to make agents search more, and a narrow mapping teaches them to rule resources out.
+- Keep the "Getting access" section, and list the team's real MCP/CLI pairs in it. MCP tools are often deferred (listed by name only), and agents miss them unless told to search for them. Agents also tend to treat "needs authorization" as "unavailable" instead of starting the login, so the section tells them to prefer the MCP, fall back to the CLI, and authorize whichever one needs it. Keep authorization on demand: agents log in to a resource only when the current question needs it, never to every tool up front.
+- Keep the name `find-missing-context`. It matches how an agent describes its own state ("I'm missing context"), which is what makes it connect the skill to the moment. Don't rename it to a tool list like `slack-jira-search` or a vague label like `research`.
+- Keep the "Search the web before giving up" step. Agents tend to skip from "internal search found nothing" straight to asking the user or guessing, even though many unexplained behaviors are documented upstream.
+- Keep the skill `description` trigger-rich. Name the situations (unexplained behavior, unknown ticket or acronym, external service behavior, before asking the user or assuming), because the description is what makes an agent load the skill.
+- In the root `AGENTS.md` Resources section, add one line pointing to this skill and saying "use these before asking the user or guessing".
+- Skip this step only if the team has no external resources beyond the repo itself.
+
 ### Step 8: Add "Working with Agents" to the root README
 
 If the project has a root `README.md` (or create one if it doesn't), add a "Working with Agents" section near the top. Use `templates/working-with-agents.md` as the base content.
 
 This section tells human developers how to work alongside AI agents in this repo: where to find the design principles, how the spec-first workflow operates, the non-negotiable rules (human review, keeping docs current), and how to use the agent skills.
 
-Adapt the links to match the actual file paths in the project. If the project doesn't use the spec-first workflow, omit that subsection. If the project has additional skills beyond `update-docs` and `audit-docs`, add them to the skills table.
+Adapt the links to match the actual file paths in the project. If the project doesn't use the spec-first workflow, omit that subsection. Add `find-missing-context` (from Step 7a) and any other project skills beyond `update-docs` and `audit-docs` to the skills table.
 
 ---
 
@@ -296,6 +311,7 @@ After generating docs, verify:
 - [ ] An agent dropped into any module directory gets enough context from its `AGENTS.md` to understand what it's looking at
 - [ ] The root `AGENTS.md` gives enough orientation that an agent knows where to look for any task
 - [ ] The root `AGENTS.md` has a Resources section with external tools/channels
+- [ ] `.claude/skills/find-missing-context/SKILL.md` exists, lists the real resources with broad "reach for it when" guidance, and the Resources section points to it
 - [ ] Local dev commands are present and accurate (an agent can actually run them)
 - [ ] `CLAUDE.md` redirects to `AGENTS.md` with the strong directive wording
 
