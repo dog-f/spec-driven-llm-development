@@ -37,7 +37,7 @@ Never bury important content in the middle. LLM accuracy follows a U-shaped curv
 - Architecture docs: under 200 lines (300 max for very complex topics)
 - Guides: under 150 lines
 
-These are caps on a single doc, not targets, and they never limit how many docs exist. A doc well under its cap that leaves out part of its topic is a loss, not a saving. Adding docs never justifies thinning existing ones: each topic doc stays as deep as its topic needs, however many other docs exist. Never pad to fill space, and never drop a topic to save lines: a subsystem that needs its own doc gets one (see Step 4). Shorter is always better if no information is lost.
+These are caps on a single doc, not targets, and they never limit how many docs exist. A doc well under its cap that leaves out part of its topic is a loss, not a saving. Never pad to fill space, and never drop a topic to save lines: a subsystem that needs its own doc gets one (see Step 4). Shorter is always better if no information is lost.
 
 **What "no information lost" means.** Preserve the big picture: what each part is for, how the parts connect, the rules and why they exist, non-obvious behavior and its consequences, and where to look next. An agent should be able to plan a change without rereading several files to rebuild that picture. It does not mean recording every fact about the code. Leave out what one search or one file read recovers (line numbers, exhaustive call-site lists, full copies of config or workflow files, file-by-file listings) and point to the file or symbol instead.
 
@@ -105,7 +105,7 @@ These apply to every rule above.
 - **Read where a value is assigned before saying what it carries.** Describe a field, status, or flag from the code that writes it, not from its name or type.
 - **Read a tool's implementation before giving example values.** For lint, commit, build, or codegen plugins, check how they derive values (e.g. a scope list built from package names) before writing an example an agent will copy.
 - **Specs and existing docs are leads, not truth.** Verify every behavioral claim you take from a spec against the code that produces or consumes the result. Work a spec plans in a sibling repo (a new caller, a new route) exists only once you find it in that repo.
-- **Check every pointer.** Open each "see X" target and confirm the fact is there; grep each symbol you cite.
+- **Check every pointer.** Open each "see X" target and confirm the fact is there; grep each symbol you cite. When a doc defers a topic to another doc, confirm that doc actually covers it.
 - **One owner per contract.** A payload shape, argument list, header list, cache-key table, or env-var table lives in one doc, like a code snippet; other docs link to it with a one-line summary. After writing module docs, cross-check each against the architecture tables it overlaps and fix disagreements.
 - **Find defects by reasoning, not only by markers.** For each computed value (a score, threshold, cap, flag, or status), check that what its consumers assume about it holds: units, ranges, defaults, and what happens on error. TODO and FIXME comments are a start, not the search.
 - **Record defects you find.** When you find a live bug or security gap while reading code (a missing permission check, an auth bypass, credentials echoed in a response), write it as a known limitation in the doc that owns that area, with the file and symbol, **and** list it in your report to the user. Don't silently document the buggy behavior as intended. A defect that spans areas lives in one Known limitations section; the others link to it.
@@ -193,6 +193,8 @@ Adapt the structure to the project. A monorepo with services gets per-service `A
 ## Process
 
 Follow these steps in order (Step 0 comes first — don't skip the interview).
+
+**Plan, then work one doc at a time.** First write a short list of every doc you will produce (module docs, every topic doc that meets a Step 4 trigger, every guide from Step 5), so none is dropped later. Then take them one at a time: read what that doc needs, write it, then move to the next. Don't survey a whole area before writing anything: reading for many docs at once fills your context, so every later step gets slower and more expensive, and nothing is saved if you run out of budget. If you split the work among helpers, give each a short list of docs and the same rule.
 
 ### Step 1: Explore the codebase
 
@@ -302,8 +304,8 @@ Guides are for recurring tasks that have non-obvious steps. Only create guides f
 - Have "gotchas" that aren't obvious from the code alone
 
 Mine for them from code, not only from the interview:
-- Read every Dockerfile, deploy manifest, and CI workflow line by line, **for every service**, and build per-service tables (base image, user and group, port, health path, start command, template engine, build config version) before writing any generalization. Never generalize a deploy fact from one service.
-- Then, from those tables: when they hold more than one cross-file invariant (a path, port, user, group, or flag that must match elsewhere, and the error when it doesn't), write a guide for modifying them.
+- Look for cross-file invariants in Dockerfiles, deploy manifests, and CI workflows: a path, port, user, group, or flag that must match in another file, and the error when it doesn't. When there is more than one, write a guide for modifying them.
+- Don't read every service's files to do this. Work from one or two, but treat every value you take from them (a version, start command, user, port, CI gate) as a field to check: before stating it as true for all services, grep that one field across the others (e.g. `grep -l templateEngine services/*/parcels/*`); where they differ, say which services differ.
 - When components call each other over HTTP or queues, write a guide for adding a field or parameter across that boundary: where the schema lives on each side, which side deploys first, and how to keep it backward compatible.
 
 Each guide should have:
@@ -371,7 +373,7 @@ This section tells human developers how to work alongside AI agents in this repo
 
 Adapt the links to match the actual file paths in the project. If the project doesn't use the spec-first workflow, omit that subsection. If the README already states a team policy that the template contradicts (for example "specs are optional"), keep the team's wording and flag the conflict in your report; don't overwrite it.
 
-Then audit every README that links to agent docs, not only the root one, and fix links to docs you renamed or didn't create. Audit the rest of the root README for accuracy (rule 2 applies to READMEs too): check every command, path, port, and link against the code, and fix or flag what's wrong. Add `find-missing-context` (from Step 7a) and any other project skills beyond `update-docs` and `audit-docs` to the skills table.
+Then fix READMEs that link to agent docs you didn't create or that you renamed: grep the READMEs for `AGENTS.md` and `docs/` links and check only those targets. Audit the rest of the root README for accuracy (rule 2 applies to READMEs too): check every command, path, port, and link against the code, and fix or flag what's wrong. Add `find-missing-context` (from Step 7a) and any other project skills beyond `update-docs` and `audit-docs` to the skills table.
 
 ---
 
@@ -381,7 +383,7 @@ Then audit every README that links to agent docs, not only the root one, and fix
 - **Git history** — `git log` and `git blame` are authoritative
 - **Generated API reference** — if there's a typedoc/swagger/godoc setup, don't duplicate it
 - **Deployment runbooks** — operational procedures (incident steps, manual promotion clicks, on-call playbooks) belong in ops tooling. But *do* document the invariants that tie deploy files to code, because they break builds and deploys silently: how the Dockerfile, deploy manifest, and chart must agree; env-var patterns in resource definitions; CI secrets and variables; and what wiring a new service needs.
-- **Frontend implementation details** — if the frontend is in a different repo, note where it lives and what APIs it consumes. Do document its defaults and gates that change what this repo receives (a default model or option it sends, a feature flag that decides which route it calls), with the sibling-repo path. To find them, read the sibling's request builder for each route this repo serves and its feature-flag registry.
+- **Frontend implementation details** — if the frontend is in a different repo, note where it lives and what APIs it consumes. Do document its defaults and gates that change what this repo receives (a default model or option it sends, a feature flag that decides which route it calls), with the sibling-repo path. To find them, start from the sibling's feature-flag registry and the few call sites that build requests to this repo; don't read the sibling repo broadly.
 - **Tutorials for the language/framework itself** — link to official docs instead
 
 ---
@@ -402,7 +404,9 @@ Include these instructions in the root `AGENTS.md` under a "Documentation Rules"
 
 ## Evaluation Criteria
 
-After generating docs, verify:
+After all docs are written (by you or by helpers), do one cross-check pass yourself: each root hard rule against the topic doc that owns it, each architecture summary table against the module docs it summarizes, and each deferral or "see X" against its target. Docs written one at a time contradict each other here first.
+
+Then verify:
 
 - [ ] Root `AGENTS.md` is under 200 lines
 - [ ] Every per-module doc is under 150 lines
@@ -414,7 +418,7 @@ After generating docs, verify:
 - [ ] Every "every/all/each/only/never/none/N of" claim, including table cells, was re-checked against its source of truth
 - [ ] Every package that meets a Step 3 criterion has its own `AGENTS.md`; every folded module or guide has a successor list in the report
 - [ ] Every in-repo pointer is a markdown link, and every "see X" lands on the fact; no README or doc links to a missing agent doc
-- [ ] Deploy and Dockerfile claims come from a per-service table covering every service
+- [ ] Every deploy fact stated for all services was grepped across services, and exceptions are named
 - [ ] Cross-cutting concerns (auth, messaging, data stores, service framework) have their own topic docs
 - [ ] `Last verified` is on the line after the title in every doc
 - [ ] Nothing configured-but-uncalled is described as live
