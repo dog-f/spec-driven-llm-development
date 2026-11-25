@@ -194,20 +194,22 @@ Adapt the structure to the project. A monorepo with services gets per-service `A
 
 Follow these steps in order (Step 0 comes first — don't skip the interview).
 
-**Plan, then work one doc at a time.** First write a short list of every doc you will produce (module docs, every topic doc that meets a Step 4 trigger, every guide from Step 5), so none is dropped later. Then take them one at a time: read what that doc needs, write it, then move to the next. Don't survey a whole area before writing anything: reading for many docs at once fills your context, so every later step gets slower and more expensive, and nothing is saved if you run out of budget. If you split the work among helpers, give each a short list of docs and the same rule.
+**Plan, then work one doc at a time.** First write a short list of every doc you will produce (module docs, every topic doc that meets a Step 4 trigger, every guide from Step 5), so none is dropped later. Build the list from directory listings, manifests, config files, and spec titles; don't read source code to make it. Then take them one at a time: read what that doc needs, write it, then move to the next. Don't survey a whole area before writing anything: reading for many docs at once fills your context, so every later step gets slower and more expensive, and nothing is saved if you run out of budget. If you split the work among helpers, give each a short list of docs and the same rule.
 
-### Step 1: Explore the codebase
+**Log progress as you go.** Write your doc list to `.docgen-progress.log` at the repo root (the list will change as you go; that's fine), then append one timestamped line each time a doc is written, e.g. `echo "$(date +%H:%M) written: services/orders/AGENTS.md" >> .docgen-progress.log`. Helpers append to the same file. Before you start writing, tell the user they can watch progress with `tail -f .docgen-progress.log` (and, if this generator repo's `scripts/watch-generation.sh` is available, that it also shows tokens used). Aim to write your first doc within about 15 minutes and keep a steady pace after that; a long gap means you are reading instead of writing. Delete the file when you finish.
 
-Before writing anything, thoroughly understand the project:
+### Step 1: Get oriented
+
+Get the shape of the project before planning, from manifests, directory listings, config, and CI files rather than source code. Deeper reading happens one doc at a time, when you write the doc that needs it:
 
 - Read package.json / go.mod / Cargo.toml / pyproject.toml (whatever applies)
 - Identify all deployable units (services, apps, CLIs)
 - Identify all shared libraries/packages
-- Understand the build system and dependency graph
-- Identify the framework(s) used and their conventions
-- Map inter-component communication (HTTP, messaging, shared DB, etc.)
+- Note the build system and dependency graph (from manifests and build config)
+- Identify the framework(s) used
+- Note which components talk to each other and how (HTTP, messaging, shared DB), from config and client setup; the details come when you write those docs
 - Find existing docs (README, wiki references, inline comments explaining architecture)
-- Read every spec in `docs/specs/implemented/` (and `todo/` specs whose code exists). Verify each against the code, and fold the parts that are live into present-tense architecture docs and guides. Never edit a spec; list the stale ones in your report.
+- List the specs in `docs/specs/implemented/` (and `todo/` specs whose code may exist). When you write the doc a spec covers, read that spec, verify it against the code, and fold the live parts into the doc. Never edit a spec; list the stale ones in your report.
 - Run `which gh aws op` plus any observability or cloud CLIs the code or CI mentions, to learn what an agent can reach (Step 0 question 12a)
 - Read the CI workflows for rules that doc edits trigger (for example, a changeset or version bump required for any change inside a published package), and satisfy them in the same change
 - Cross-reference what you find with what the user told you in Step 0
@@ -305,7 +307,7 @@ Guides are for recurring tasks that have non-obvious steps. Only create guides f
 
 Mine for them from code, not only from the interview:
 - Look for cross-file invariants in Dockerfiles, deploy manifests, and CI workflows: a path, port, user, group, or flag that must match in another file, and the error when it doesn't. When there is more than one, write a guide for modifying them.
-- Don't read every service's files to do this. Work from one or two, but treat every value you take from them (a version, start command, user, port, CI gate) as a field to check: before stating it as true for all services, grep that one field across the others (e.g. `grep -l templateEngine services/*/parcels/*`); where they differ, say which services differ.
+- Don't read every service's files to do this. Work from one or two, but treat every value you take from them (a version, start command, user, port, CI gate) as a field to check: before stating it as true for all services, grep that one field across the others (e.g. `grep -H '^USER' services/*/Dockerfile`); where they differ, say which services differ.
 - When components call each other over HTTP or queues, write a guide for adding a field or parameter across that boundary: where the schema lives on each side, which side deploys first, and how to keep it backward compatible.
 
 Each guide should have:
@@ -437,6 +439,8 @@ Then verify:
 - [ ] `.claude/skills/find-missing-context/SKILL.md` exists, lists the real resources with broad "reach for it when" guidance, and the Resources section points to it
 - [ ] Local dev commands are present and accurate (an agent can actually run them)
 - [ ] `CLAUDE.md` redirects to `AGENTS.md` with the strong directive wording
+
+End your report to the user by offering the optional one-time validation pass: before committing the new docs, they can have an agent run `validation/validate-generated-docs/SKILL.md` from this generator repo, which checks the finished set against the code with fresh agents, fixes confirmed errors, and fills commonly dropped facts found by grep (typically a quarter to a third of the generation cost). Don't run it yourself, and don't copy it into the target repo.
 
 ---
 

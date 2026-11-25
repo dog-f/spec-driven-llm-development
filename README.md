@@ -44,12 +44,42 @@ Read ~/path/to/spec-driven-llm-development/prompt.md and generate documentation
 for this codebase following the system described there.
 ```
 
+### Monitoring an initial run
+
+Generation on a large codebase can take 30–60 minutes and a lot of tokens. The agent keeps a timestamped progress log at `.docgen-progress.log` in your project (its planned doc list, then one timestamped line per doc written), so with any agent you can watch it from a second terminal:
+
+```bash
+tail -f /path/to/your/project/.docgen-progress.log
+```
+
+Some reading before the first doc is normal. On a medium sized codebase the first doc usually appears within about 15 minutes. ~15 minutes without a new one once writing has started means the agent is reading without writing. Double check the plan it logged.
+
+With Claude Code, `scripts/watch-generation.sh` also shows the files changed and the tokens used so far, including subagents (tokens, not cost). Agents can't see their own token usage, so this comes from the session transcript, not the log:
+
+```bash
+spec-driven-llm-development/scripts/watch-generation.sh /path/to/your/project      # every 60s
+spec-driven-llm-development/scripts/watch-generation.sh /path/to/your/project 30   # every 30s
+```
+
+## Optional: validate the generated docs
+
+Before committing the new docs, you can run a one-time pass where fresh agents check them against the code, fix confirmed errors, and add commonly missed facts that a grep turns up. It costs roughly a quarter to a third of the generation run.
+
+```
+Read ~/path/to/spec-driven-llm-development/validation/validate-generated-docs/SKILL.md
+and run it on the docs just generated in this repo.
+```
+
+It isn't installed into your repo (use `audit-docs` for ongoing checks). Review its diff before committing.
+
 ## Contents
 
 ```
 spec-driven-llm-development/
 ├── README.md                          # You are here
 ├── prompt.md                          # The instruction file you give to your AI agent
+├── scripts/
+│   └── watch-generation.sh            # Optional: watch a generation run (files written, progress, tokens)
 ├── research/
 │   └── evidence-and-guidelines.md     # Full research synthesis (read for understanding, not required)
 ├── templates/
@@ -61,6 +91,8 @@ spec-driven-llm-development/
 │   ├── decision.md                    # Architectural decision record template
 │   ├── working-with-agents.md         # "Working with Agents" section for the root README
 │   └── find-missing-context-skill.md          # Skill template: search external resources before guessing (filled in per repo)
+├── validation/
+│   └── validate-generated-docs/SKILL.md   # One-time accuracy pass after generation (not installed into your repo)
 ├── skills/
 │   ├── update-docs/SKILL.md           # Claude Code skill: update docs after code changes
 │   └── audit-docs/SKILL.md            # Claude Code skill: periodic audit of docs vs codebase
