@@ -39,6 +39,10 @@ Last verified: YYYY-MM-DD
 - [Convention that must be followed]
 - [Common mistake to avoid]
 
+## Symptoms
+
+- `[exact error or observed behavior]` — [what it means and which step to recheck]
+
 ## Reference Files
 
 - `path/to/example-1` — [what it demonstrates]

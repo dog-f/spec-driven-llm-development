@@ -18,7 +18,9 @@ Create a hierarchy: Root `AGENTS.md` → per-module `AGENTS.md` → architecture
 
 ### 2. Keep docs fresh — add "Last verified" dates
 
-Every document gets `Last verified: YYYY-MM-DD` at the top (use today's date). Up-to-dateness is the #1 documentation problem (~39% of defects in a 162-type taxonomy study).
+Every document gets `Last verified: YYYY-MM-DD` on the line after its title (line 3, as in the templates; use today's date), but only after you have checked its claims; the date is a certificate, not a timestamp. `CLAUDE.md` gets no date, and decision records use their own `Date:` line instead. When you edit a section of a README, re-check and re-date the whole README. Up-to-dateness is the #1 documentation problem (~39% of defects in a 162-type taxonomy study).
+
+The date certifies every claim checkable from the repo and any local checkout of a sibling repo. A claim about a system you can't read (repository settings, a deployment UI, a registry, infrastructure owned elsewhere) doesn't hold the date back. Mark it inline instead: `*(External: <where it lives>; not verifiable from this repo.)*`. Before marking, check whatever local copy exists; an external claim you can check and find wrong is a fix, not a marker.
 
 **Why:** Stale docs cause agents to generate confidently wrong code. A wrong doc is worse than no doc. _(Aghajani et al., "Software Documentation Issues Unveiled," ICSE 2019)_
 
@@ -35,7 +37,13 @@ Never bury important content in the middle. LLM accuracy follows a U-shaped curv
 - Architecture docs: under 200 lines (300 max for very complex topics)
 - Guides: under 150 lines
 
-Never pad to fill space. Shorter is always better if no information is lost. If a doc needs to be longer, split it.
+These are caps on a single doc, not targets, and they never limit how many docs exist. A doc well under its cap that leaves out part of its topic is a loss, not a saving. Adding docs never justifies thinning existing ones: each topic doc stays as deep as its topic needs, however many other docs exist. Never pad to fill space, and never drop a topic to save lines: a subsystem that needs its own doc gets one (see Step 4). Shorter is always better if no information is lost.
+
+**What "no information lost" means.** Preserve the big picture: what each part is for, how the parts connect, the rules and why they exist, non-obvious behavior and its consequences, and where to look next. An agent should be able to plan a change without rereading several files to rebuild that picture. It does not mean recording every fact about the code. Leave out what one search or one file read recovers (line numbers, exhaustive call-site lists, full copies of config or workflow files, file-by-file listings) and point to the file or symbol instead.
+
+**Over budget? Condense before you split.** Remove repeats, keep each fact in one owning doc with pointers from the others, and cut detail the code already shows. Split only when what remains still doesn't fit.
+
+**Condensing never drops a condition.** This applies equally when you write from code and when you shorten existing text. When you summarize code or text, keep every "only when" and "unless", every "change X and Y together", every "after changing X, run Y", and every "because". When you replace a worked example with a different one, carry over the old example's failure modes and exact error messages, or keep both.
 
 **Exception — READMEs:** User-facing README files are exempt from strict line-count and style constraints. They serve humans first and may be longer. They must still meet the same accuracy bar (no stale claims, no references to retired behavior), but formatting, length, and style are relaxed.
 
@@ -55,7 +63,16 @@ Point to the real implementation. Don't invent "similar" examples or use generic
 
 ### 7. Specify exact interfaces and explicit requirements
 
-Use real function names, class names, file paths, port numbers, environment variables. Be specific about what exists and what things are called.
+Use real function names, class names, file paths, port numbers, environment variables. Be specific about what exists and what things are called. "Exact interfaces" also covers:
+
+- numeric limits: retention, TTLs, size caps, timeouts, retry counts;
+- payload types that cross a boundary (HTTP bodies, queue messages, compiler output read by a runtime) and the invariants both sides rely on;
+- config flags whose values differ by environment or region;
+- CI secrets and repository variables that a workflow needs;
+- config values that carry a TODO, ticket, or region comment (the comment usually states the reason or the condition: keep both);
+- the shape of operator-entered values such as base URLs (whether a path suffix like `/v1` is required or forbidden).
+
+Cite a file and a symbol, never a line number: line numbers drift with every edit. Write every pointer to another doc or file in the repo as a relative markdown link (`[messaging.md](messaging.md)`), not bare backticks, so humans can click it and link checks can verify it. All paths are repo-relative. Never write a home directory or other absolute path, even when the interview answers use one; write sibling repos as relative paths (`../other-repo`).
 
 **Why:** Providing exact names + structured requirements vs. leaving them implicit swung pass rates ~3×. _(SWE-Bench Pro, arXiv:2509.16941)_
 
@@ -72,6 +89,29 @@ If documentation mentions a wiki page, ticket, channel, or external resource —
 ### 10. Describe the present, not the past
 
 Document what the code does *now*. Remove references to retired behavior, old approaches, and negations about things that no longer exist. A reader who never knew the old design is only confused by references to it.
+
+Two kinds of content look historical but are present-tense, so keep them:
+
+- **Negative facts that block a likely wrong assumption** ("the gateway does not cache responses", "this route has no internal twin, unlike its neighbors"). They describe the system as it is.
+- **Known-limitations registers.** A list of what the system currently cannot do, or does wrong, is current state.
+
+### Accuracy checks while writing
+
+These apply to every rule above.
+
+- **Enumerate before you generalize.** Before writing "every", "all", "each", "only", or "N of", list the members from their source of truth (a file glob, a route table, a registry, a config list) and check each one. For counts, count the registrations themselves (e.g. the `app.get`/`app.post` calls in a router), not lines or files. Over-generalized claims are the most common error in generated docs. Before you finish, grep your drafts for these words and for "never", "none", and "always", and re-check each claim. Table cells and section openers count: a matrix of which component uses which store or client must be rebuilt from each component's own registration calls, not inferred.
+- **Document only reachable behavior.** Before describing a branch, response, or option, confirm the code path is wired up (something calls it, a route mounts it, a config sets it). Read an argument's implementation before describing its values.
+- **Present is not used.** A client in a config list, a module or cache in the bootstrap, a dependency in a manifest, a copied class, or an exported function is not "used" until you find both its registration and a live call site that some route, job, or consumer reaches. When either is missing, document it as a negative fact ("configured but never called") rather than describing what it would do. For a package dependency, registration means an import from source: a dependency nothing imports is a negative fact. Check every manifest this way, services as well as packages. Test fixtures count as reachable only if a test that is not skipped reads them.
+- **Read where a value is assigned before saying what it carries.** Describe a field, status, or flag from the code that writes it, not from its name or type.
+- **Read a tool's implementation before giving example values.** For lint, commit, build, or codegen plugins, check how they derive values (e.g. a scope list built from package names) before writing an example an agent will copy.
+- **Specs and existing docs are leads, not truth.** Verify every behavioral claim you take from a spec against the code that produces or consumes the result. Work a spec plans in a sibling repo (a new caller, a new route) exists only once you find it in that repo.
+- **Check every pointer.** Open each "see X" target and confirm the fact is there; grep each symbol you cite.
+- **One owner per contract.** A payload shape, argument list, header list, cache-key table, or env-var table lives in one doc, like a code snippet; other docs link to it with a one-line summary. After writing module docs, cross-check each against the architecture tables it overlaps and fix disagreements.
+- **Find defects by reasoning, not only by markers.** For each computed value (a score, threshold, cap, flag, or status), check that what its consumers assume about it holds: units, ranges, defaults, and what happens on error. TODO and FIXME comments are a start, not the search.
+- **Record defects you find.** When you find a live bug or security gap while reading code (a missing permission check, an auth bypass, credentials echoed in a response), write it as a known limitation in the doc that owns that area, with the file and symbol, **and** list it in your report to the user. Don't silently document the buggy behavior as intended. A defect that spans areas lives in one Known limitations section; the others link to it.
+- **Cross-check the interview against the code.** When an answer from Step 0 disagrees with the code (a count, a command, a port), use the code, and list the mismatch in your report to the user. Don't silently pick one.
+- **Each pitfall states its consequence and the action.** "X breaks" is incomplete; "X makes Y fail at startup; do Z" is a pitfall.
+- **Each code snippet lives in one doc.** Other docs point to it rather than copy it.
 
 ---
 
@@ -111,7 +151,7 @@ Before you write anything, you need to understand the system. Ask the user the f
 
 - Filter aggressively. Not everything the user says belongs in documentation. Only include what an agent needs to write correct code.
 - The product/system description becomes the opening paragraph of the root `AGENTS.md`.
-- Hard constraints become the "Hard Rules" section.
+- Hard constraints become the "Hard Rules" section. Also derive hard rules from the repo itself: `.gitignore` (files never to commit, such as `.env`), git hooks, CI gates, and security or rules files.
 - Architecture answers inform the service map, dependency graph, and architecture docs.
 - Dev workflow answers become the "Local Development" and "Build & Test" sections.
 - External resources become the "Resources" section in the root `AGENTS.md` and the `find-missing-context` skill (Step 7a).
@@ -128,6 +168,7 @@ project-root/
 ├── AGENTS.md                          # Root agent document (orientation + routing)
 ├── CLAUDE.md                          # Points to AGENTS.md (for Claude Code compatibility)
 ├── .claude/skills/find-missing-context/SKILL.md   # Tells agents to search external resources before guessing
+├── .claude/skills/update-docs/, audit-docs/       # Doc-maintenance skills, adapted to this repo (Step 7b)
 ├── docs/
 │   ├── architecture/
 │   │   ├── system-overview.md         # Service/module topology and communication
@@ -164,7 +205,23 @@ Before writing anything, thoroughly understand the project:
 - Identify the framework(s) used and their conventions
 - Map inter-component communication (HTTP, messaging, shared DB, etc.)
 - Find existing docs (README, wiki references, inline comments explaining architecture)
+- Read every spec in `docs/specs/implemented/` (and `todo/` specs whose code exists). Verify each against the code, and fold the parts that are live into present-tense architecture docs and guides. Never edit a spec; list the stale ones in your report.
+- Run `which gh aws op` plus any observability or cloud CLIs the code or CI mentions, to learn what an agent can reach (Step 0 question 12a)
+- Read the CI workflows for rules that doc edits trigger (for example, a changeset or version bump required for any change inside a published package), and satisfy them in the same change
 - Cross-reference what you find with what the user told you in Step 0
+
+### Step 1b: Inventory existing docs before replacing any
+
+If the repo already has agent docs, architecture docs, guides, or ADRs, account for them before you create, replace, or delete anything:
+
+1. For each existing doc, list its facts that the code can't give back: rationale, production-only gotchas, cross-file invariants, known limitations, external links.
+2. Give each fact a fate: **kept** (same doc), **moved** (to a named successor doc), or **dropped** (verified stale against code, with the evidence).
+3. Treat content added since the docs were last generated (`git log` on the doc paths) as high-signal; someone added it because it was missing.
+4. Demoting a doc moves every fact: when a module loses its own `AGENTS.md` (folded into an index or a topic doc), each of its pitfalls, commands, and rules must appear in the named successor. In your report, list each folded module or guide with its test commands, pitfalls, and rules and the successor file that now holds each one.
+5. When READMEs, specs, or other docs link to agent docs that don't exist (for example after a deletion), either create the doc at that path or update every inbound link; never leave a README pointing at a missing or renamed doc.
+6. Never delete a doc that has no named successor. Never rewrite or delete an existing decision record or spec (they are append-only).
+
+Include the inventory, with its dropped facts and their evidence, in your report to the user.
 
 ### Step 2: Create the root AGENTS.md
 
@@ -179,7 +236,7 @@ This is the most important document. It auto-loads for every agent session. Incl
 7. **Documentation rules** — the maintenance rules (see "Maintenance System" below), including the README exemption: user-facing READMEs share the same accuracy bar but are exempt from agent-doc line-length and style limits
 8. **Local development** — prerequisites, install steps, how to start the project locally (Docker, infra, etc.)
 9. **Build & test commands** — the basics to get running and verify correctness
-10. **Resources** — external systems an agent can consult when stuck: Slack channels, Jira projects, Confluence spaces, GitHub orgs/repos, local sibling checkouts. Include actual URLs or paths where possible.
+10. **Resources** — external systems an agent can consult when stuck: Slack channels, Jira projects, Confluence spaces, GitHub orgs/repos, local sibling checkouts. Include actual URLs or paths where possible. Mine the repo's own docs, specs, and CI config for channel, project, and space names before asking. Link a Slack channel as `https://<workspace>.slack.com/archives/<channel-id>` when you can resolve the ID; otherwise give the channel name with its ID.
 
 Keep it under 200 lines. This is orientation + routing, not encyclopedic reference.
 
@@ -190,13 +247,21 @@ For each service, package, or module that an agent might work in independently, 
 1. **Purpose** — one sentence on what this module does
 2. **Source layout** — directory tree of the key folders/files
 3. **Key patterns** — with actual code examples from the module (most important section)
-4. **Testing** — how to run tests for this module specifically
+4. **Testing** — how to run tests for this module specifically, plus any destructive side effect (what the suite wipes, flushes, or deletes, and which env var or config decides where it points)
 5. **Common pitfalls** — things that are non-obvious or that break in surprising ways
 6. **Related docs** — links to architecture docs relevant to this module
 
 Keep each under 150 lines. The agent reads this when `cd`'d into the module directory.
 
-**When to create one:** If a module has its own test command, its own build step, or patterns that differ from the rest of the project, it gets its own `AGENTS.md`. A thin wrapper package with 3 files probably doesn't need one.
+**When to create one:** Every deployable unit (service, app, CLI) gets its own `AGENTS.md`. Libraries and packages are listed in one index doc per directory (e.g. `packages/AGENTS.md`). A package also gets its own `AGENTS.md` when **any** of these holds:
+
+- it has its own test layout or fixture recipe (how to add a case, where cases live, what runs them);
+- it has a build pipeline beyond plain `tsc` (bundlers, generated artifacts, WASM, post-build steps);
+- it defines a runtime contract other components must honor (a wire format, an execution or scheduling semantics, a plugin interface), not merely exported functions; in a monorepo nearly every package is imported by something, so being imported is not enough;
+- it is a security boundary (sandboxing, auth, untrusted input);
+- its pitfalls need a code example.
+
+Topic docs don't replace a package doc: an architecture doc explains how a subsystem works across components, while the package `AGENTS.md` tells an agent working inside the package how to change and test it. When unsure, write the package doc. Don't write one for a vendored fork or a types-only package; give them an index entry. Rules shared by every package (changesets, test flags, build tool) live once in the index doc, not repeated in each package doc.
 
 ### Step 4: Create architecture docs
 
@@ -209,8 +274,21 @@ One document per major architectural concern. Common topics:
 - Build/deploy pipeline
 - Domain-specific concepts (the core domain model)
 
+That list is a floor, not a menu. Cross-cutting concerns (authentication between services, messaging, data stores, the service framework) keep their own topic docs even when every service also has its own `AGENTS.md`; service docs link to them rather than splitting their content. Also write a topic doc for every feature subsystem that meets **any** of these triggers:
+
+- it spans two or more deployable units;
+- it has a dedicated source directory with 8 or more files;
+- it has 5 or more dedicated test files;
+- it has its own config block or environment variables;
+- it has a spec in `docs/specs/implemented/`;
+- it is a core domain concept with its own states, types, or rules (port or message types, scheduling semantics, a lifecycle), even when it has no dedicated directory. Such a doc states every state, every numbered rule, and the test suite that pins them; a table row in another doc is not enough.
+
+A subsystem that meets a trigger but is covered only by a few lines in a module doc is the most common way generated docs lose depth.
+
+While writing each topic doc, look for what is currently broken or unsupported in that area (skipped or failing tests, TODO/FIXME comments, unhandled cases, inconsistencies between components) and end the doc with a **Known limitations** section when you find any. Don't rely only on registers that already exist.
+
 Each doc should have:
-- `Last verified: YYYY-MM-DD` at line 1
+- `Last verified: YYYY-MM-DD` on the line after the title (rule 2)
 - ASCII diagrams for topology where helpful
 - Tables for structured data
 - Concrete names (real services, real ports, real env vars)
@@ -223,10 +301,16 @@ Guides are for recurring tasks that have non-obvious steps. Only create guides f
 - Have a specific order of operations
 - Have "gotchas" that aren't obvious from the code alone
 
+Mine for them from code, not only from the interview:
+- Read every Dockerfile, deploy manifest, and CI workflow line by line, **for every service**, and build per-service tables (base image, user and group, port, health path, start command, template engine, build config version) before writing any generalization. Never generalize a deploy fact from one service.
+- Then, from those tables: when they hold more than one cross-file invariant (a path, port, user, group, or flag that must match elsewhere, and the error when it doesn't), write a guide for modifying them.
+- When components call each other over HTTP or queues, write a guide for adding a field or parameter across that boundary: where the schema lives on each side, which side deploys first, and how to keep it backward compatible.
+
 Each guide should have:
 - Numbered steps with real code from the codebase
 - Real file paths (not `path/to/file`)
-- A "Key rules" section for non-obvious constraints
+- A "Key rules" section for non-obvious constraints that repeats every "never" or "must" stated in the steps
+- A "Symptoms" section: the errors or behaviors a reader is likely to hit when a step goes wrong, quoted exactly, and what each one means
 - Under 150 lines
 
 ### Step 6: Create CLAUDE.md
@@ -241,6 +325,8 @@ This repo uses `AGENTS.md` as its root agent document. YOU MUST FIRST READ THE P
 
 This redirect exists because Claude Code auto-loads `CLAUDE.md`. The real content lives in `AGENTS.md` so that it works for any agent, not just Claude.
 
+Never overwrite a `CLAUDE.md` that is a symlink target or has frontmatter: it is someone else's config (for example an editor rule), so leave it byte-for-byte unchanged. If a module already has its own `CLAUDE.md`, keep it: move its content into that module's `AGENTS.md` (or keep it in place if other files symlink to or include it), and leave a redirect. Check for symlinks and editor rules (`.cursor/`, `.github/`) that point at it before changing the file.
+
 ### Step 7: Create templates
 
 Create `docs/specs/TEMPLATE.md` and `docs/decisions/TEMPLATE.md` in the project so future specs and decisions have a starting point. Use the templates provided in this repo as a base:
@@ -249,6 +335,12 @@ Create `docs/specs/TEMPLATE.md` and `docs/decisions/TEMPLATE.md` in the project 
 - `templates/decision.md` → place as `docs/decisions/TEMPLATE.md`
 
 Adapt the content to fit the project's terminology (e.g., rename "Affected Components" if the project uses "services" or "modules"), but preserve the immutability rules and Open Questions format.
+
+Also create `docs/decisions/document-driven-development.md` from `templates/decision.md`: a decision record that the repo adopts this documentation system. Its Decision section must state the 10 design principles from "The 10 Writing Rules" above in plain language, each with a one-line reason, under a `## Design principles` heading, so the target repo holds the rationale itself. The `update-docs` and `audit-docs` skills point to it by that name, and the README's "Working with Agents" section links to its `#design-principles` anchor.
+
+Never link any generated file to this generator repo or its hosting URL (its research doc, README, or prompt). The target repo's docs must stand on their own; summarize what they need instead of linking out.
+
+When you instantiate any template, replace every placeholder with this project's real values (its real ticket key in place of the template's `PROJ-1234`; its paths and names), and remove its instructions to the author (naming and location rules, "Do not lose information for the sake of conforming to the template") from the instance; keep them only in `TEMPLATE.md`. Existing decision records and specs are append-only: never rewrite or delete them.
 
 ### Step 7a: Create the `find-missing-context` skill
 
@@ -263,13 +355,23 @@ Agents tend to guess rather than search, even when they can reach Slack, the iss
 - In the root `AGENTS.md` Resources section, add one line pointing to this skill and saying "use these before asking the user or guessing".
 - Skip this step only if the team has no external resources beyond the repo itself.
 
+### Step 7b: Install and adapt the maintenance skills
+
+Copy `skills/update-docs/` and `skills/audit-docs/` from this repo into `.claude/skills/update-docs/` and `.claude/skills/audit-docs/`. Then adapt each one to this repo rather than leaving it generic:
+
+- add a short routing table: which kinds of change touch which docs here (e.g. a new route → that service's `AGENTS.md` and the matching architecture doc);
+- list the directories the skills must skip (vendored code, forks, generated files, tooling boilerplate);
+- add a `Last verified` date.
+
 ### Step 8: Add "Working with Agents" to the root README
 
-If the project has a root `README.md` (or create one if it doesn't), add a "Working with Agents" section near the top. Use `templates/working-with-agents.md` as the base content.
+If the project has a root `README.md` (or create one if it doesn't), add a "Working with Agents" section after the README's setup and run instructions (a newcomer needs to get the project running first). Use `templates/working-with-agents.md` as the base content.
 
 This section tells human developers how to work alongside AI agents in this repo: where to find the design principles, how the spec-first workflow operates, the non-negotiable rules (human review, keeping docs current), and how to use the agent skills.
 
-Adapt the links to match the actual file paths in the project. If the project doesn't use the spec-first workflow, omit that subsection. Add `find-missing-context` (from Step 7a) and any other project skills beyond `update-docs` and `audit-docs` to the skills table.
+Adapt the links to match the actual file paths in the project. If the project doesn't use the spec-first workflow, omit that subsection. If the README already states a team policy that the template contradicts (for example "specs are optional"), keep the team's wording and flag the conflict in your report; don't overwrite it.
+
+Then audit every README that links to agent docs, not only the root one, and fix links to docs you renamed or didn't create. Audit the rest of the root README for accuracy (rule 2 applies to READMEs too): check every command, path, port, and link against the code, and fix or flag what's wrong. Add `find-missing-context` (from Step 7a) and any other project skills beyond `update-docs` and `audit-docs` to the skills table.
 
 ---
 
@@ -278,8 +380,8 @@ Adapt the links to match the actual file paths in the project. If the project do
 - **Things derivable from reading the code** — don't restate what clear code already says
 - **Git history** — `git log` and `git blame` are authoritative
 - **Generated API reference** — if there's a typedoc/swagger/godoc setup, don't duplicate it
-- **Deployment runbooks** — these belong in ops tooling, not developer docs
-- **Frontend implementation details** — if the frontend is in a different repo, just note where it lives and what APIs it consumes
+- **Deployment runbooks** — operational procedures (incident steps, manual promotion clicks, on-call playbooks) belong in ops tooling. But *do* document the invariants that tie deploy files to code, because they break builds and deploys silently: how the Dockerfile, deploy manifest, and chart must agree; env-var patterns in resource definitions; CI secrets and variables; and what wiring a new service needs.
+- **Frontend implementation details** — if the frontend is in a different repo, note where it lives and what APIs it consumes. Do document its defaults and gates that change what this repo receives (a default model or option it sends, a feature flag that decides which route it calls), with the sibling-repo path. To find them, read the sibling's request builder for each route this repo serves and its feature-flag registry.
 - **Tutorials for the language/framework itself** — link to official docs instead
 
 ---
@@ -293,7 +395,8 @@ Include these instructions in the root `AGENTS.md` under a "Documentation Rules"
 3. New features should start as specs in `docs/specs/todo/`
 4. Significant architectural decisions should be recorded in `docs/decisions/`
 5. A stale doc (>3 months without verification) should be fixed or flagged immediately
-6. **README exemption:** user-facing READMEs share the same accuracy bar (no stale info, no retired references) but are exempt from the line-count and style constraints that apply to agent documents
+6. A short form of the 10 writing rules, with the line limits from rule 4 (root <200, module <150, architecture <200 with 300 max, guides <150) and the topic-doc triggers from Step 4. The `update-docs` and `audit-docs` skills read these from here instead of restating them.
+7. **README exemption:** user-facing READMEs share the same accuracy bar (no stale info, no retired references) but are exempt from the line-count and style constraints that apply to agent documents
 
 ---
 
@@ -303,14 +406,30 @@ After generating docs, verify:
 
 - [ ] Root `AGENTS.md` is under 200 lines
 - [ ] Every per-module doc is under 150 lines
-- [ ] Every architecture doc is under 200 lines
-- [ ] Every doc has a "Last verified" date
-- [ ] Every doc with code examples uses REAL code from the ACTUAL codebase
+- [ ] Every architecture doc is under 200 lines (300 max), every guide under 150
+- [ ] Every doc has a "Last verified" date (except `CLAUDE.md`; decision records use `Date:`)
+- [ ] Every code snippet matches the source verbatim (spot-check each against its file)
 - [ ] No doc references retired/removed behavior
-- [ ] No orphan links (everything referenced actually exists)
+- [ ] No orphan links: every relative link and path in every doc you wrote or edited resolves. Append-only specs and decision records are exempt; list their broken links in your report instead of editing them
+- [ ] Every "every/all/each/only/never/none/N of" claim, including table cells, was re-checked against its source of truth
+- [ ] Every package that meets a Step 3 criterion has its own `AGENTS.md`; every folded module or guide has a successor list in the report
+- [ ] Every in-repo pointer is a markdown link, and every "see X" lands on the fact; no README or doc links to a missing agent doc
+- [ ] Deploy and Dockerfile claims come from a per-service table covering every service
+- [ ] Cross-cutting concerns (auth, messaging, data stores, service framework) have their own topic docs
+- [ ] `Last verified` is on the line after the title in every doc
+- [ ] Nothing configured-but-uncalled is described as live
+- [ ] Every security gap or live bug you found is a known limitation in its owning doc and is in your report
+- [ ] CI rules triggered by doc edits (e.g. changesets) are satisfied
+- [ ] No absolute or home-directory paths, and no line-number references
+- [ ] No generated file links to this generator repo or its hosting URL; `docs/decisions/document-driven-development.md` states the design principles itself
+- [ ] No fact is restated in full in more than one agent doc (one owner, pointers elsewhere)
+- [ ] Every subsystem that meets a Step 4 trigger has a topic doc
+- [ ] Every existing doc you replaced or deleted has a named successor for each of its kept facts (Step 1b)
+- [ ] The root README's commands, paths, and links are accurate
 - [ ] An agent dropped into any module directory gets enough context from its `AGENTS.md` to understand what it's looking at
 - [ ] The root `AGENTS.md` gives enough orientation that an agent knows where to look for any task
 - [ ] The root `AGENTS.md` has a Resources section with external tools/channels
+- [ ] `.claude/skills/update-docs/` and `.claude/skills/audit-docs/` exist and are adapted to this repo (routing table, skip list, date)
 - [ ] `.claude/skills/find-missing-context/SKILL.md` exists, lists the real resources with broad "reach for it when" guidance, and the Resources section points to it
 - [ ] Local dev commands are present and accurate (an agent can actually run them)
 - [ ] `CLAUDE.md` redirects to `AGENTS.md` with the strong directive wording
@@ -319,4 +438,4 @@ After generating docs, verify:
 
 ## Additional Context
 
-For the full research backing these rules (academic citations, empirical evidence, refuted claims, and measurement methodology), see [`research/evidence-and-guidelines.md`](https://github.com/dog-f/spec-driven-llm-development/blob/main/research/evidence-and-guidelines.md). You don't need to read it to generate docs — the rules above are the distilled, actionable output. But it's there if you want to understand *why* each rule exists.
+For the full research backing these rules (academic citations, empirical evidence, refuted claims, and measurement methodology), see [`research/evidence-and-guidelines.md`](research/evidence-and-guidelines.md) in this generator repo. You don't need to read it to generate docs — the rules above are the distilled, actionable output. But it's there if you want to understand *why* each rule exists.

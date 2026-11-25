@@ -1,8 +1,6 @@
 ## Working with Agents
 
-**Start here:** Read the [10 Design Principles](https://github.com/dog-f/spec-driven-llm-development/blob/main/research/evidence-and-guidelines.md#4-design-principles-plain-language-summary) behind this repo's documentation — it explains *why* this repo is documented the way it is, backed by empirical research on what actually helps AI agents generate correct code.
-
-Here is the [full research synthesis](https://github.com/dog-f/spec-driven-llm-development/blob/main/research/evidence-and-guidelines.md).
+**Start here:** Read the [10 Design Principles](docs/decisions/document-driven-development.md#design-principles) behind this repo's documentation — they explain *why* this repo is documented the way it is, based on research into what actually helps AI agents generate correct code.
 
 ### The Spec-First Workflow
 

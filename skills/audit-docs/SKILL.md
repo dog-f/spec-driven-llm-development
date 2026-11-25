@@ -1,3 +1,8 @@
+---
+name: audit-docs
+description: Periodically audit every AGENTS.md, architecture doc, guide, and README against the current codebase to catch documentation drift that /update-docs missed.
+---
+
 # Audit Documentation
 
 Run this skill periodically or when you suspect docs have drifted from reality. Unlike `/update-docs` (which is diff-based — it checks what you just changed), this skill audits docs against the **current codebase state** to catch drift introduced by PRs that didn't run `/update-docs`.
@@ -6,8 +11,8 @@ Run this skill periodically or when you suspect docs have drifted from reality. 
 
 Read these two files for the full rationale and rules:
 
-1. **`AGENTS.md`** (root) — see the "Documentation Rules" section for the 10 writing rules and maintenance call to action.
-2. **`docs/decisions/document-driven-development-system.md`** — the research backing these rules. The key finding: stale docs cause agents to generate confidently wrong code because they treat documentation as ground truth.
+1. **`AGENTS.md`** (root) — the "Documentation Rules" section is the single source for the writing rules, line limits, and staleness window. This skill does not restate them.
+2. **`docs/decisions/document-driven-development.md`** — the research backing these rules. The key finding: stale docs cause agents to generate confidently wrong code because they treat documentation as ground truth.
 
 ## Workflow
 
@@ -31,8 +36,8 @@ git ls-files '**/README.md' 'README.md' | grep -viE 'node_modules|\.changeset'
 
 ### 2. Check "Last verified" dates
 
-Every `AGENTS.md`, `README.md`, and architecture doc has a "Last verified" date (forked/vendored READMEs and tooling boilerplate are exempt). Flag any doc where:
-- The date is older than 1 month from today
+Every `AGENTS.md`, `README.md`, architecture doc, and guide has a "Last verified" date (exempt: `CLAUDE.md`, decision records, which use `Date:`, and forked/vendored READMEs or tooling boilerplate). Flag any doc where:
+- The date is older than the staleness window in the root "Documentation Rules"
 - The date is missing entirely
 
 Report these as stale candidates — they need verification even if the content might still be correct. READMEs are held to the same accuracy bar; only their length/style rules are relaxed.
@@ -90,19 +95,21 @@ For docs you confirmed are still accurate (no changes needed), update their "Las
 
 Summarize:
 - How many docs were audited
-- Which docs had stale dates (>1 month)
+- Which docs had stale dates (past the staleness window)
 - What inaccuracies were found and fixed
 - What was confirmed still correct
 
-## Rules (from the research)
+## Rules
+
+Follow the root `AGENTS.md` "Documentation Rules" for limits and the staleness window. While fixing, the ones most often missed:
 
 - **Concrete code examples over prose** — if a pattern changed, show the new real code.
-- **Keep docs concise** — under 200 lines; up to 300 for particularly complex services/packages. This applies to **agent-facing** docs (`AGENTS.md`, architecture docs). **User-facing `README.md` files are exempt** from the length limit but must still be fully accurate and dated.
 - **Put critical info at start/end** — don't bury important details in the middle.
 - **Don't add speculative docs** — only document what exists now.
-- **Describe the present, not the past** — when fixing a doc, *remove* references to removed/retired behavior rather than documenting it.
+- **Describe the present, not the past** — *remove* references to removed/retired behavior rather than documenting it.
 - **Cite external sources** — if a doc references an external resource, it must include the URL.
-- **Reference real code** — point to actual file paths and implementations, not abstract descriptions.
+- **Reference real code** — point to actual file paths and symbols, never line numbers.
+- **Enumerate before you generalize** — re-check every "all"/"every"/"N of" claim member by member.
 
 ## When to run this skill
 

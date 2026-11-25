@@ -24,14 +24,14 @@ module-name/
 [One sentence explaining the pattern, then a real code example:]
 
 ```typescript
-// from src/[actual-path]
+// from [module-dir]/src/[actual-path]   (repo-relative)
 [actual code from the module — 5-15 lines showing the pattern]
 ```
 
 ### [Pattern Name #2]
 
 ```typescript
-// from src/[actual-path]
+// from [module-dir]/src/[actual-path]   (repo-relative)
 [actual code]
 ```
 
@@ -43,6 +43,8 @@ pnpm test -- --grep "name"  # run specific test
 ```
 
 [Any setup required before tests run — e.g., "build packages first" or "docker compose up"]
+
+[Destructive side effects, if any: what the suite wipes, flushes, or deletes, and which env var or config decides where it points — e.g., "the test setup truncates every table in the database named by `DATABASE_URL`; point it at a throwaway database"]
 
 ## Common Pitfalls
 

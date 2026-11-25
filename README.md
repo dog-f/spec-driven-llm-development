@@ -7,7 +7,7 @@ A framework for generating empirically-optimized documentation that makes your c
 
 ### Please read this if nothing else
 
-This repo contains everything you need to generate a documentation system for your own codebase — one that's specifically designed to help AI agents understand and work in your code effectively. It's based on a research synthesis of ~38 academic sources and ~50 verified empirical claims about how LLMs consume documentation. I highly recommend at least viewing and understanding the rationale behind the [10 Design Principles](https://github.com/dog-f/spec-driven-llm-development/blob/main/research/evidence-and-guidelines.md#4-design-principles-plain-language-summary).
+This repo contains everything you need to generate a documentation system for your own codebase — one that's specifically designed to help AI agents understand and work in your code effectively. It's based on a research synthesis of ~38 academic sources and ~50 verified empirical claims about how LLMs consume documentation. I highly recommend at least viewing and understanding the rationale behind the [10 Design Principles](research/evidence-and-guidelines.md#4-design-principles-plain-language-summary).
 
 The core insight: **curated, layered documentation dramatically improves AI agent output quality** — but only if you follow specific principles backed by evidence (positioning, length budgets, concrete examples over prose, freshness).
 
@@ -24,10 +24,9 @@ Make sure the model your using is one you've had decent luck with understanding 
 
 ## Quick Start
 
-```bash
-# Clone this repo
-git clone https://github.com/dog-f/spec-driven-llm-development.git
+Clone this repo, then
 
+```bash
 # Copy the prompt into your target project (or reference it directly)
 cp spec-driven-llm-development/prompt.md /path/to/your/project/
 
@@ -73,11 +72,12 @@ spec-driven-llm-development/
 
 ## Skills (Claude Code)
 
-The `skills/` directory contains two Claude Code skills for ongoing documentation maintenance. To use them, copy the entire `skills/` directory into your target repo under `.claude/`:
+The `skills/` directory contains two Claude Code skills for ongoing documentation maintenance. The generator copies each one into your target repo as `.claude/skills/<name>/` and adapts it (Step 7b of `prompt.md`). To copy them by hand:
 
 ```bash
 # From your target repo root:
-cp -r /path/to/spec-driven-llm-development/skills .claude/
+mkdir -p .claude/skills
+cp -r /path/to/spec-driven-llm-development/skills/update-docs /path/to/spec-driven-llm-development/skills/audit-docs .claude/skills/
 ```
 
 This gives you `update-docs` and `audit-docs`. Once placed, new Claude sessions should be able to use them to keep your docs up to date.
@@ -104,7 +104,7 @@ These are the empirically-backed rules that govern all generated documentation:
 9. **Cite with links** — actual URLs, not "per the docs somewhere."
 10. **Describe the present** — not the past. Remove references to retired behavior.
 
-Each rule has empirical backing mapped in the [research synthesis](https://github.com/dog-f/spec-driven-llm-development/blob/main/research/evidence-and-guidelines.md#4-design-principles-plain-language-summary).
+Each rule has empirical backing mapped in the [research synthesis](research/evidence-and-guidelines.md#4-design-principles-plain-language-summary).
 
 ## Who This Is For
 

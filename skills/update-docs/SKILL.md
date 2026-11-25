@@ -11,8 +11,8 @@ Run this skill after finishing a feature, bug fix, or refactoring that changes h
 
 Read these two files for the full rationale and rules:
 
-1. **`AGENTS.md`** (root) — see the "Documentation Rules" section for the 10 writing rules and maintenance call to action.
-2. **`docs/decisions/document-driven-development-for-llms.md`** — the research backing these rules. The key finding: stale docs cause agents to generate confidently wrong code because they treat documentation as ground truth (Aghajani et al., ICSE 2019: ~39% of documentation defects are up-to-dateness issues).
+1. **`AGENTS.md`** (root) — the "Documentation Rules" section is the single source for the writing rules, line limits, and staleness window. This skill does not restate them.
+2. **`docs/decisions/document-driven-development.md`** — the research backing these rules. The key finding: stale docs cause agents to generate confidently wrong code because they treat documentation as ground truth (Aghajani et al., ICSE 2019: ~39% of documentation defects are up-to-dateness issues).
 
 ## Workflow
 
@@ -26,13 +26,7 @@ Read these two files for the full rationale and rules:
 
    Also check the root `README.md` — it's the human-facing equivalent of `AGENTS.md` and covers local dev setup, commit conventions, Docker commands, and workflow checks. If your changes affect any of those (new make targets, changed ports, new services), update it too.
 
-3. **Check architecture docs.** If your changes affect:
-   - Inter-service communication → update `docs/architecture/messaging.md` or `docs/architecture/system-overview.md`
-   - Data models or stores → update `docs/architecture/data-stores.md`
-   - Auth patterns → update `docs/architecture/inter-service-auth.md`
-   - Core domain logic or processing pipeline → update relevant architecture docs
-   - Deployment config → update `docs/architecture/deployment.md`
-   - Framework usage → update framework-specific architecture docs
+3. **Check architecture docs.** Find every architecture doc that covers what you changed: `grep -rl -e <service-or-package> -e <changed-symbol> docs/architecture/`. Read each hit and fix what your change made wrong (communication, data stores, auth, deployment, domain pipeline, framework usage). If your change adds a subsystem that meets a topic-doc trigger in the root "Documentation Rules", create its doc.
 
 4. **Check guides.** If your changes alter the pattern shown in any guide under `docs/guides/`, update the guide to show the new pattern with real code.
 
@@ -45,15 +39,17 @@ Read these two files for the full rationale and rules:
 
 7. **Report.** Summarize what you updated and what you confirmed was already correct.
 
-## Rules (from the research)
+## Rules
+
+Follow the root `AGENTS.md` "Documentation Rules" for limits and the staleness window. While updating, the ones most often missed:
 
 - **Concrete code examples over prose** — if a pattern changed, show the new real code, not a description of it.
-- **Keep docs concise** — under 200 lines; up to 300 for particularly complex services/packages. Don't pad to fill space. This length limit applies to **agent-facing** docs (`AGENTS.md`, architecture docs). **User-facing `README.md` files are exempt** — they may be longer and carry richer instructional/graphical content. READMEs must still be fully accurate and dated; only the style/length pedantry is relaxed.
 - **Put critical info at start/end** — don't bury new important details in the middle of a doc.
 - **Don't add speculative docs** — only document what exists now, not what might exist later.
-- **Describe the present, not the past** — when updating a doc, *remove* references to removed/retired behavior rather than documenting it.
-- **Cite external sources** — if a doc references an external resource (wiki, ticket, thread), it must include the URL. Vague references are dead ends for agents.
+- **Describe the present, not the past** — *remove* references to removed/retired behavior rather than documenting it.
+- **Cite external sources** — if a doc references an external resource (wiki, ticket, thread), it must include the URL.
+- **Cite files and symbols, not line numbers**, and keep every path repo-relative.
 
 ---
 
-**Keep this skill current.** If you add a new architecture doc, guide category, or restructure `docs/`, update this file in the same change.
+**Keep this skill current.** If you restructure `docs/`, update this file in the same change.

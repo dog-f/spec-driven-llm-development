@@ -46,6 +46,8 @@ These are starting points, not boundaries. Any resource can hold the answer to a
 5. **Search the web before giving up.** If internal sources come up empty, search the web (`WebSearch` / `WebFetch`, which may also be deferred, so load them with `ToolSearch`). Try the exact error string, the library or protocol name with its version, the vendor's docs, and GitHub issues for third-party dependencies. Many "unexplained" behaviors are upstream behaviors with a public answer.
 6. **Know when to stop.** Only after internal sources *and* the web come up empty, ask the user. Say what you searched and what you found.
 
+Searching is read-only. Never post, comment, or edit in any of these systems unless the user asked you to.
+
 ## Report what you found
 
 When context shaped your answer, cite it with a link. When you searched and found nothing, say so. An unflagged assumption isn't useful.
