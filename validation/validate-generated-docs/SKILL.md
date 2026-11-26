@@ -48,7 +48,7 @@ How to fix:
 - When you edit a sentence, re-check every clause in it, not only the one you came to fix.
 - When you find an exception to a general rule, correct the rule itself ("all Node services X, except Y"), not only add the exception elsewhere; a rule left standing next to its own exception is still wrong.
 - Do not delete a claim because you couldn't verify it. Leave it, mark it "not confirmed from the repo" (or `*(External: …)*` for a system you can't read), and list it as unverified with what would confirm it. Don't soften it with "probably" or "likely"; an agent acts on a hedged claim as if it were true. Leave existing "not confirmed" markers alone unless the repo shows the answer.
-- **Add what you see, not what you'd have to search for.** While reading code to check a claim, if a condition, rule, consequence, or "change X and Y together" right there is missing from the doc that owns that code, add it in a sentence with its evidence. Don't go looking for more.
+- **Add what you see, not what you'd have to search for, and only what an agent would need.** While reading code to check a claim, if a condition, rule, consequence, or "change X and Y together" right there is missing from the doc that owns that code, add it in a sentence with its evidence. Don't add what one grep recovers (a config value, a file list, a constant). Don't go looking for more.
 - Don't add new docs or new sections; if a topic has no home, report it.
 - Change or keep a doc's `Last verified` date only if you checked every claim in it; otherwise leave the date as it was and list the doc as partially checked. A fresh date over a surviving error certifies the error.
 - Record every fix with its evidence: the file and symbol that show the right value.

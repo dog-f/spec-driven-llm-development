@@ -35,7 +35,7 @@ These are starting points, not boundaries. Any resource can hold the answer to a
 | **[Observability, e.g. logs/APM]** | What production actually does: errors, real payloads, whether a path is hit |
 | **Web** | Third-party library and protocol docs, upstream changelogs, known issues |
 
-[Remove rows the team doesn't have. Add rows for any other resource agents can reach. Keep each "reach for it when" broad: describe kinds of questions, not an exhaustive list, so an agent never rules a resource out.]
+[Remove rows the team doesn't have. Add rows for any other resource agents can reach. In each row, name every channel, space, project, or repo the interview gives for that resource, with its link. Keep each "reach for it when" broad: describe kinds of questions, not an exhaustive list, so an agent never rules a resource out.]
 
 ## How to search
 
