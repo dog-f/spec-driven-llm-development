@@ -20,7 +20,9 @@ Create a hierarchy: Root `AGENTS.md` → per-module `AGENTS.md` → architecture
 
 Every document gets `Last verified: YYYY-MM-DD` on the line after its title (line 3, as in the templates; use today's date), but only after you have checked its claims; the date is a certificate, not a timestamp. `CLAUDE.md` gets no date, and decision records use their own `Date:` line instead. When you edit a section of a README, re-check and re-date the whole README. Up-to-dateness is the #1 documentation problem (~39% of defects in a 162-type taxonomy study).
 
-The date certifies every claim checkable from the repo and any local checkout of a sibling repo. A claim about a system you can't read (repository settings, a deployment UI, a registry, infrastructure owned elsewhere) doesn't hold the date back. Mark it inline instead: `*(External: <where it lives>; not verifiable from this repo.)*`. Before marking, check whatever local copy exists; an external claim you can check and find wrong is a fix, not a marker.
+The date certifies every claim checkable from the repo and any local checkout of a sibling repo. A claim about a system you can't read (repository settings, a deployment UI, a registry, infrastructure owned elsewhere) doesn't hold the date back. Mark it inline instead: `*(External: <where it lives>; not verifiable from this repo.)*`. Before marking, check whatever local copy exists; an external claim you can check and find wrong is a fix, not a marker. If the user allowed it in Step 0 (question 13a), also search the resources they named, read-only, before marking: one or two targeted searches per claim, not a survey of the space. When a source confirms the claim, keep the marker and put the source's URL in it (`*(External: <URL>.)*`). When a source adds a fact the claim needs (a rollout order, an owner, a limit), add it with the same marker. When a source disagrees with the code, the code wins: write what the code shows and list the conflict under **Needs a person** in your report. Without that permission, mark and move on.
+
+**Surface what you couldn't verify.** Every claim in a doc is either verified against the repo or carries a marker: `*(External: …)*` for a system you can't read, or "not confirmed from the repo" for a reason or behavior you couldn't trace. Don't hedge in the doc itself ("probably", "likely", "should"); an agent acts on a hedged claim as if it were true, so a doc states what's verified and marks what isn't. Every marker, and every place you chose between conflicting sources, goes under **Needs a person** in your report (see the end of this file).
 
 **Why:** Stale docs cause agents to generate confidently wrong code. A wrong doc is worse than no doc. _(Aghajani et al., "Software Documentation Issues Unveiled," ICSE 2019)_
 
@@ -108,8 +110,8 @@ These apply to every rule above.
 - **Check every pointer.** Open each "see X" target and confirm the fact is there; grep each symbol you cite. When a doc defers a topic to another doc, confirm that doc actually covers it.
 - **One owner per contract.** A payload shape, argument list, header list, cache-key table, or env-var table lives in one doc, like a code snippet; other docs link to it with a one-line summary. After writing module docs, cross-check each against the architecture tables it overlaps and fix disagreements.
 - **Find defects by reasoning, not only by markers.** For each computed value (a score, threshold, cap, flag, or status), check that what its consumers assume about it holds: units, ranges, defaults, and what happens on error. TODO and FIXME comments are a start, not the search.
-- **Record defects you find.** When you find a live bug or security gap while reading code (a missing permission check, an auth bypass, credentials echoed in a response), write it as a known limitation in the doc that owns that area, with the file and symbol, **and** list it in your report to the user. Don't silently document the buggy behavior as intended. A defect that spans areas lives in one Known limitations section; the others link to it.
-- **Cross-check the interview against the code.** When an answer from Step 0 disagrees with the code (a count, a command, a port), use the code, and list the mismatch in your report to the user. Don't silently pick one.
+- **Record defects you find.** When you find a live bug or security gap while reading code (a missing permission check, an auth bypass, credentials echoed in a response), write it as a known limitation in the doc that owns that area, with the file and symbol, **and** list it under **Needs a person** in your report. Don't silently document the buggy behavior as intended. A defect that spans areas lives in one Known limitations section; the others link to it.
+- **Cross-check the interview against the code.** When an answer from Step 0 disagrees with the code (a count, a command, a port), use the code, and list the mismatch under **Needs a person** in your report. Don't silently pick one.
 - **Each pitfall states its consequence and the action.** "X breaks" is incomplete; "X makes Y fail at startup; do Z" is a pitfall.
 - **Each code snippet lives in one doc.** Other docs point to it rather than copy it.
 
@@ -146,6 +148,7 @@ Before you write anything, you need to understand the system. Ask the user the f
 12. Are there GitHub organizations, repos, or issue trackers that an agent should know about?
 12a. What else can agents reach from this machine: MCP servers, CLIs (`gh`, observability or cloud CLIs), dashboards, shared drives? Before asking, check for yourself: look at `.mcp.json`, `.claude/settings*.json`, and the tools and MCP servers available in your own session, then ask the user to confirm and fill gaps.
 13. Is there any existing documentation — READMEs, wikis, architecture diagrams, ADRs — that should be preserved or incorporated?
+13a. May I search the external resources from questions 11–13 while writing, read-only, to check claims the repo can't? It makes the docs more accurate on deployment, infrastructure, and other systems owned elsewhere, but costs extra tokens. I would only search for claims I'd otherwise mark as external, and never post, comment, edit, or change anything there. Which resources may I use? (The default is no: those claims are marked external and left for a person to check.)
 
 ### How to use the answers:
 
@@ -155,6 +158,7 @@ Before you write anything, you need to understand the system. Ask the user the f
 - Architecture answers inform the service map, dependency graph, and architecture docs.
 - Dev workflow answers become the "Local Development" and "Build & Test" sections.
 - External resources become the "Resources" section in the root `AGENTS.md` and the `find-missing-context` skill (Step 7a).
+- The answer to 13a decides whether you search those resources while writing (see "Last verified" in the rules). Record the allowed resources at the top of your notes and use only those; if a tool for one isn't available in your session, list it under **Needs a person** instead of working around it.
 - Sibling repos get noted in the root `AGENTS.md` so agents know where to look beyond this directory.
 
 ---
@@ -209,7 +213,7 @@ Get the shape of the project before planning, from manifests, directory listings
 - Identify the framework(s) used
 - Note which components talk to each other and how (HTTP, messaging, shared DB), from config and client setup; the details come when you write those docs
 - Find existing docs (README, wiki references, inline comments explaining architecture)
-- List the specs in `docs/specs/implemented/` (and `todo/` specs whose code may exist). When you write the doc a spec covers, read that spec, verify it against the code, and fold the live parts into the doc. Never edit a spec; list the stale ones in your report.
+- List the specs in `docs/specs/implemented/` (and `todo/` specs whose code may exist). When you write the doc a spec covers, read that spec, verify it against the code, and fold the live parts into the doc. Never edit a spec; list the stale ones under **Needs a person**.
 - Run `which gh aws op` plus any observability or cloud CLIs the code or CI mentions, to learn what an agent can reach (Step 0 question 12a)
 - Read the CI workflows for rules that doc edits trigger (for example, a changeset or version bump required for any change inside a published package), and satisfy them in the same change
 - Cross-reference what you find with what the user told you in Step 0
@@ -225,7 +229,7 @@ If the repo already has agent docs, architecture docs, guides, or ADRs, account 
 5. When READMEs, specs, or other docs link to agent docs that don't exist (for example after a deletion), either create the doc at that path or update every inbound link; never leave a README pointing at a missing or renamed doc.
 6. Never delete a doc that has no named successor. Never rewrite or delete an existing decision record or spec (they are append-only).
 
-Include the inventory, with its dropped facts and their evidence, in your report to the user.
+Include the inventory, with its dropped facts and their evidence, in your report to the user, and list each dropped fact under **Needs a person** so someone can confirm it was safe to drop.
 
 ### Step 2: Create the root AGENTS.md
 
@@ -307,6 +311,7 @@ Guides are for recurring tasks that have non-obvious steps. Only create guides f
 
 Mine for them from code, not only from the interview:
 - Look for cross-file invariants in Dockerfiles, deploy manifests, and CI workflows: a path, port, user, group, or flag that must match in another file, and the error when it doesn't. When there is more than one, write a guide for modifying them.
+- In that guide, try to give each non-default setting in those files (a build flag, a file mode, a user or group switch, a port, an umask, the order of two steps) its reason and what breaks if someone removes, reorders, or changes it. State a reason only when the repo shows it: a comment, a value that must match another file, or a relation visible in the files (a binary built in one stage and copied into an image with a different base; a file read by a process that runs as a non-root user). Quote an error message only if it appears in the repo. Don't build or run anything to find out. When the repo doesn't show the reason, don't supply one: write "keep it; reason not confirmed from the repo" so no one removes it casually, and list the setting under **Needs a person** with "build and run the image" as what would confirm it.
 - Don't read every service's files to do this. Work from one or two, but treat every value you take from them (a version, start command, user, port, CI gate) as a field to check: before stating it as true for all services, grep that one field across the others (e.g. `grep -H '^USER' services/*/Dockerfile`); where they differ, say which services differ.
 - When components call each other over HTTP or queues, write a guide for adding a field or parameter across that boundary: where the schema lives on each side, which side deploys first, and how to keep it backward compatible.
 
@@ -373,7 +378,7 @@ If the project has a root `README.md` (or create one if it doesn't), add a "Work
 
 This section tells human developers how to work alongside AI agents in this repo: where to find the design principles, how the spec-first workflow operates, the non-negotiable rules (human review, keeping docs current), and how to use the agent skills.
 
-Adapt the links to match the actual file paths in the project. If the project doesn't use the spec-first workflow, omit that subsection. If the README already states a team policy that the template contradicts (for example "specs are optional"), keep the team's wording and flag the conflict in your report; don't overwrite it.
+Adapt the links to match the actual file paths in the project. If the project doesn't use the spec-first workflow, omit that subsection. If the README already states a team policy that the template contradicts (for example "specs are optional"), keep the team's wording and list the conflict under **Needs a person**; don't overwrite it.
 
 Then fix READMEs that link to agent docs you didn't create or that you renamed: grep the READMEs for `AGENTS.md` and `docs/` links and check only those targets. Audit the rest of the root README for accuracy (rule 2 applies to READMEs too): check every command, path, port, and link against the code, and fix or flag what's wrong. Add `find-missing-context` (from Step 7a) and any other project skills beyond `update-docs` and `audit-docs` to the skills table.
 
@@ -416,7 +421,7 @@ Then verify:
 - [ ] Every doc has a "Last verified" date (except `CLAUDE.md`; decision records use `Date:`)
 - [ ] Every code snippet matches the source verbatim (spot-check each against its file)
 - [ ] No doc references retired/removed behavior
-- [ ] No orphan links: every relative link and path in every doc you wrote or edited resolves. Append-only specs and decision records are exempt; list their broken links in your report instead of editing them
+- [ ] No orphan links: every relative link and path in every doc you wrote or edited resolves. Append-only specs and decision records are exempt; list their broken links under **Needs a person** instead of editing them
 - [ ] Every "every/all/each/only/never/none/N of" claim, including table cells, was re-checked against its source of truth
 - [ ] Every package that meets a Step 3 criterion has its own `AGENTS.md`; every folded module or guide has a successor list in the report
 - [ ] Every in-repo pointer is a markdown link, and every "see X" lands on the fact; no README or doc links to a missing agent doc
@@ -424,7 +429,8 @@ Then verify:
 - [ ] Cross-cutting concerns (auth, messaging, data stores, service framework) have their own topic docs
 - [ ] `Last verified` is on the line after the title in every doc
 - [ ] Nothing configured-but-uncalled is described as live
-- [ ] Every security gap or live bug you found is a known limitation in its owning doc and is in your report
+- [ ] Every security gap or live bug you found is a known limitation in its owning doc
+- [ ] No doc hedges ("probably", "likely"); every unverified claim carries a marker, and every marker, mismatch, defect, and dropped fact is under **Needs a person**
 - [ ] CI rules triggered by doc edits (e.g. changesets) are satisfied
 - [ ] No absolute or home-directory paths, and no line-number references
 - [ ] No generated file links to this generator repo or its hosting URL; `docs/decisions/document-driven-development.md` states the design principles itself
@@ -440,7 +446,9 @@ Then verify:
 - [ ] Local dev commands are present and accurate (an agent can actually run them)
 - [ ] `CLAUDE.md` redirects to `AGENTS.md` with the strong directive wording
 
-End your report to the user by offering the optional one-time validation pass: before committing the new docs, they can have an agent run `validation/validate-generated-docs/SKILL.md` from this generator repo, which checks the finished set against the code with fresh agents, fixes confirmed errors, and fills commonly dropped facts found by grep (typically a quarter to a third of the generation cost). Don't run it yourself, and don't copy it into the target repo.
+Near the end of your report, add a section titled **Needs a person**: one line per item, grouped by kind (external claims, unconfirmed reasons, interview-vs-code mismatches, defects found, facts dropped from replaced docs, stale specs and conflicts). Each line names the doc, the claim, and what would confirm it (a file to read, a person to ask, a build to run). Put the items most likely to mislead an agent first. Don't list claims you verified. Where the confirmation is a build or a container run, say the user can let an agent do it or do it themselves, at their discretion; don't do it yourself.
+
+End your report to the user by offering the optional one-time validation pass: before committing the new docs, they can have an agent run `validation/validate-generated-docs/SKILL.md` from this generator repo, which checks the finished set against the code with fresh agents, fixes confirmed errors, and fills commonly dropped facts found by grep (roughly just under the generation cost). Don't run it yourself, and don't copy it into the target repo.
 
 ---
 

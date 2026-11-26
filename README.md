@@ -61,9 +61,13 @@ spec-driven-llm-development/scripts/watch-generation.sh /path/to/your/project   
 spec-driven-llm-development/scripts/watch-generation.sh /path/to/your/project 30   # every 30s
 ```
 
+### Why it asks about external resources
+
+Claims the repo can't confirm (a deployment UI, infrastructure owned elsewhere) are marked `*(External: …)*` by default. The interview and validation ask whether the agent may also check them in your wiki, chat, or issue tracker: read-only, more accurate, more tokens. When a source disagrees with the code, the code wins.
+
 ## Optional: validate the generated docs
 
-Before committing the new docs, you can run a one-time pass where fresh agents check them against the code, fix confirmed errors, and add commonly missed facts that a grep turns up. It costs roughly a quarter to a third of the generation run.
+Before committing the new docs, you can run a one-time pass where fresh agents check them against the code, fix confirmed errors, and add commonly missed facts that a grep turns up. It can cost roughly just shy of the generation run. In my evaluations, I only saw a very small increase in performance when using the validation.
 
 ```
 Read ~/path/to/spec-driven-llm-development/validation/validate-generated-docs/SKILL.md
